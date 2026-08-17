@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HackTutor — পেন্টেস্টিং লার্নিং প্ল্যাটফর্ম</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header>
+  <h1>🛡 HackTutor</h1>
+  <span>পেন্টেস্টিং লার্নিং প্ল্যাটফর্ম — অনুমোদিত ল্যাব/CTF-এর জন্য</span>
+</header>
+
+<nav>
+  <button class="active" data-tab="chat">💬 চ্যাট</button>
+  <button data-tab="lesson">📚 লেসন</button>
+  <button data-tab="run">⚡ কমান্ড তথ্য</button>
+  <button data-tab="rep">🗂 রিপোর্ট</button>
+</nav>
+
+<main>
+
+  <div id="chat" class="tab active">
+    <div class="card">
+      <div id="chatlog">
+        <div class="msg bot">
+          স্বাগতম! অনুমোদিত ল্যাব/CTF নিয়ে প্রশ্ন করো।
+        </div>
+      </div>
+      <div class="row">
+        <input id="cmsg" placeholder="প্রশ্ন লিখো..." autocomplete="off">
+        <button class="go" onclick="sendChat()">পাঠাও</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="lesson" class="tab">
+    <div class="card">
+      <label>ফেজ বাছাই করো</label>
+      <select id="phase"></select>
+
+      <label>টার্গেট / ল্যাব</label>
+      <input id="ltarget" placeholder="যেমন: localhost বা নিজের lab">
+
+      <div class="row">
+        <button class="go" onclick="loadLesson()">গাইড দেখাও</button>
+        <button class="go blue" onclick="explainPhase()">AI ব্যাখ্যা</button>
+      </div>
+
+      <div id="lessonout"></div>
+    </div>
+  </div>
+
+  <div id="run" class="tab">
+    <div class="card">
+      <div class="warn">
+        ⚠ Public Render server থেকে arbitrary OS command execution নিরাপত্তার কারণে
+        বন্ধ রাখা হয়েছে। নিজের lab machine-এ প্রয়োজনীয় command ম্যানুয়ালি চালাও।
+      </div>
+      <p>
+        এই অংশটি শুধু নিরাপদভাবে deployment security সম্পর্কে তথ্য দেখায়।
+      </p>
+      <pre id="runout">Command runner disabled.</pre>
+    </div>
+  </div>
+
+  <div id="rep" class="tab">
+    <div class="card">
+      <button class="go" onclick="loadReports()">রিপোর্ট লিস্ট</button>
+      <div id="repout"></div>
+    </div>
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
