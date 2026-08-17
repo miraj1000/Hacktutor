@@ -1,0 +1,126 @@
+/* HackTutor — ফ্রন্টএন্ড লজিক */
+
+// ট্যাব স্যুইচ
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// হেল্পার
+async function post(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  });
+  return r.json();
+}
+
+function esc(s) {
+  return String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ১. চ্যাট
+async function sendChat() {
+  const input = document.getElementById('cmsg');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const log = document.getElementById('chatlog');
+  log.innerHTML += '<div class="msg user">' + esc(msg) + '</div>';
+  input.value = '';
+  log.scrollTop = log.scrollHeight;
+
+  log.innerHTML += '<div class="msg bot">লিখছি...</div>';
+  const d = await post('/api/chat', { message: msg });
+
+  const bots = log.querySelectorAll('.msg.bot');
+  bots[bots.length - 1].innerHTML = esc(d.reply || 'কোনো উত্তর নেই');
+  log.scrollTop = log.scrollHeight;
+}
+
+document.getElementById('cmsg').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChat();
+});
+
+// ২. লেসন
+let phases = {};
+
+(async function initLessons() {
+  const r = await fetch('/api/lessons');
+  phases = await r.json();
+  document.getElementById('phase').innerHTML =
+    Object.entries(phases)
+      .map(([k, v]) => `<option value="${k}">${v.name}</option>`)
+      .join('');
+})();
+
+function loadLesson() {
+  const k = document.getElementById('phase').value;
+  const t = document.getElementById('ltarget').value || '127.0.0.1';
+  const p = phases[k];
+  if (!p) return;
+
+  let h = `<h3 class="green">${p.name}</h3><p>${p.desc}</p><ul class="cmds">`;
+  p.cmds.forEach(c => {
+    h += `<li><code>${esc(c[1].replace('{target}', t))}</code><small>${c[0]}</small></li>`;
+  });
+  document.getElementById('lessonout').innerHTML = h + '</ul>';
+}
+
+async function explainPhase() {
+  const k = document.getElementById('phase').value;
+  const t = document.getElementById('ltarget').value || '127.0.0.1';
+  const out = document.getElementById('lessonout');
+  out.innerHTML = '<pre>লিখছি...</pre>';
+
+  const d = await post('/api/chat', {
+    message: `ফেজ "${phases[k].name}" টার্গেট ${t}-এ কীভাবে করবো — ধাপে ধাপে বাংলায় শেখাও, কমান্ডসহ`
+  });
+  out.innerHTML = '<pre>' + esc(d.reply || 'কোনো উত্তর নেই') + '</pre>';
+}
+
+// ৩. ফাইল জেনারেটর
+async function genFile() {
+  const d = await post('/api/generate', {
+    kind: document.getElementById('gkind').value,
+    lhost: document.getElementById('glhost').value,
+    lport: document.getElementById('glport').value,
+    target: document.getElementById('gtarget').value
+  });
+
+  const out = document.getElementById('genout');
+  if (!d.ok) {
+    out.innerHTML = `<div class="red">${esc(d.msg)}</div>`;
+    return;
+  }
+  const fname = d.file.split('/').pop();
+  const runCmd = fname.endsWith('.php') ? `php ${fname}` : `bash ${fname}`;
+  out.innerHTML =
+    `<div class="green">[+] ফাইল বানানো হলো: ${esc(d.file)}</div>` +
+    `<pre>${esc(d.content)}</pre>` +
+    `<div>রান করো: <code>${runCmd}</code></div>`;
+}
+
+// ৪. কমান্ড রানার
+async function runCmd() {
+  const d = await post('/api/run', {
+    cmd: document.getElementById('rcmd').value,
+    target: document.getElementById('rtarget').value
+  });
+  document.getElementById('runout').innerHTML =
+    `<pre class="${d.ok ? 'green' : 'red'}">${esc(d.out)}</pre>`;
+}
+
+// ৫. রিপোর্ট
+async function loadReports() {
+  const r = await fetch('/api/reports');
+  const items = await r.json();
+  document.getElementById('repout').innerHTML = items.length
+    ? items.map(f => `<a href="/">${esc(f)}</a><br>`).join('')
+    : '<div class="red">কোনো ফাইল/রিপোর্ট নেই এখনো</div>';
+           }
